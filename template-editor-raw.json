@@ -1,0 +1,30 @@
+{
+  "PORT": {
+    "value": "9377",
+    "description": "Port the Camofox Browser server listens on. Railway injects this automatically."
+  },
+  "CAMOFOX_API_KEY": {
+    "value": "",
+    "description": "API key for authentication. Leave empty to disable auth (anyone with the URL can use the service). Set to a random secret to restrict access."
+  },
+  "CAMOFOX_ADMIN_KEY": {
+    "value": "",
+    "description": "Admin key for privileged operations (stats, management). Leave empty to disable admin endpoints."
+  },
+  "CAMOFOX_PROFILE_DIR": {
+    "value": "/data/profiles",
+    "description": "Directory for storing browser profiles (cookies, localStorage, IndexedDB). Set to /data/profiles to use a Railway volume for persistence across restarts."
+  },
+  "MAX_SESSIONS": {
+    "value": "10",
+    "description": "Maximum number of concurrent browser sessions. Each session uses significant memory (500MB+). Reduce if memory-constrained."
+  },
+  "BROWSER_IDLE_TIMEOUT_MS": {
+    "value": "300000",
+    "description": "Browser idle timeout in milliseconds (5 minutes). Browsers with no activity are shut down to save resources."
+  },
+  "CAMOFOX_INTERACTIVE": {
+    "value": "off",
+    "description": "Interactive mode: 'off' (headless only), 'desktop' (always interactive), 'novnc' (VNC via browser), 'auto' (detect based on capabilities)."
+  }
+}
