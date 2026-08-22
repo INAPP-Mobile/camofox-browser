@@ -1,6 +1,6 @@
 # Deploy and Host
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/IrXpSx)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/camofox-browser)
 
 ![Camofox Browser](https://raw.githubusercontent.com/INAPP-Mobile/camofox-browser/main/template-icon.svg)
 
