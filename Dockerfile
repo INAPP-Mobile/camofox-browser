@@ -103,11 +103,14 @@ RUN mkdir -p /data/profiles \
     && useradd --create-home --shell /bin/false app \
     && mkdir -p /home/app/.cache \
     && cp -r /root/.cache/camoufox /home/app/.cache/camoufox \
-    && chown -R app:app /data/profiles /app /home/app/.cache
-USER app
+    && chown -R app:app /data/profiles /app /home/app/.cache \
+    && apt-get update && apt-get install -y gosu && rm -rf /var/lib/apt/lists/*
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 WORKDIR /app
 
 EXPOSE 9377
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Health check - Railway pings this to verify service is running
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
