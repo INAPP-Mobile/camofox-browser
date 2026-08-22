@@ -1,6 +1,6 @@
 # Camofox Browser
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/camofox-browser)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/IrXpSx)
 
 A privacy-focused, anti-detection browser automation service powered by Camoufox. Deploy a headless browser with built-in fingerprint randomization, VNC support, and session persistence — ready for scraping, automation, and testing workloads.
 
