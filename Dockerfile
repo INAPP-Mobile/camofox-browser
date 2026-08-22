@@ -126,4 +126,3 @@ COPY plugins/ ./plugins/
 COPY camofox.config.json ./
 COPY scripts/install-plugin-deps.sh /tmp/install-plugin-deps.sh
 RUN /tmp/install-plugin-deps.sh && rm /tmp/install-plugin-deps.sh
-USER app
