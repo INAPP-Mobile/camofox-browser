@@ -5,7 +5,6 @@
     "dockerfile": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "node server.js",
     "healthcheckPath": "/",
     "healthcheckTimeout": 120,
     "startPeriod": 300,
