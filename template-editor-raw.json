@@ -4,12 +4,12 @@
     "description": "Port the Camofox Browser server listens on. Railway injects this automatically."
   },
   "CAMOFOX_API_KEY": {
-    "value": "",
-    "description": "API key for authentication. Leave empty to disable auth (anyone with the URL can use the service). Set to a random secret to restrict access."
+    "value": "${{secret(32)}}",
+    "description": "API key for authentication. Auto-generated on deploy. Set to empty string to disable auth (anyone with the URL can use the service)."
   },
   "CAMOFOX_ADMIN_KEY": {
-    "value": "",
-    "description": "Admin key for privileged operations (stats, management). Leave empty to disable admin endpoints."
+    "value": "${{secret(32)}}",
+    "description": "Admin key for privileged operations (stats, management). Auto-generated on deploy. Set to empty string to disable admin endpoints."
   },
   "CAMOFOX_PROFILE_DIR": {
     "value": "/data/profiles",

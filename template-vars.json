@@ -8,15 +8,15 @@
     },
     {
       "name": "CAMOFOX_API_KEY",
-      "defaultValue": "",
-      "description": "API key for authentication. Leave empty to disable auth (anyone with the URL can use the service). Set to a random secret to restrict access.",
-      "isOptional": true
+      "defaultValue": "${{secret(32)}}",
+      "description": "API key for authentication. Auto-generated on deploy. Set to empty string to disable auth (anyone with the URL can use the service).",
+      "isOptional": false
     },
     {
       "name": "CAMOFOX_ADMIN_KEY",
-      "defaultValue": "",
-      "description": "Admin key for privileged operations (stats, management). Leave empty to disable admin endpoints.",
-      "isOptional": true
+      "defaultValue": "${{secret(32)}}",
+      "description": "Admin key for privileged operations (stats, management). Auto-generated on deploy. Set to empty string to disable admin endpoints.",
+      "isOptional": false
     },
     {
       "name": "CAMOFOX_PROFILE_DIR",
@@ -34,13 +34,13 @@
       "name": "BROWSER_IDLE_TIMEOUT_MS",
       "defaultValue": "300000",
       "description": "Browser idle timeout in milliseconds (5 minutes). Browsers with no activity are shut down to save resources.",
-      "isOptional": true
+      "isOptional": false
     },
     {
       "name": "CAMOFOX_INTERACTIVE",
       "defaultValue": "off",
       "description": "Interactive mode: 'off' (headless only), 'desktop' (always interactive), 'novnc' (VNC via browser), 'auto' (detect based on capabilities).",
-      "isOptional": true
+      "isOptional": false
     }
   ]
 }
