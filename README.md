@@ -8,6 +8,8 @@ Camofox Browser is a privacy-focused, anti-detection browser automation service 
 
 ## Source Repository
 
+This project is based on [Camoufox](https://github.com/camoufox/camoufox) — the anti-detection Firefox automation framework. This fork adds a REST API server, session management, Railway deployment support, and the template pipeline.
+
 [https://github.com/INAPP-Mobile/camofox-browser](https://github.com/INAPP-Mobile/camofox-browser)
 
 The source code is available under the MIT license. Contributions welcome.
