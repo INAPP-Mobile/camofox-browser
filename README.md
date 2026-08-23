@@ -42,39 +42,39 @@ This template deploys on Railway with a single service running Camoufox (a patch
 
 ## Usage
 
-After deploy, access your browser at `https://<your-domain>:9377`. Interact via the REST API using tabs:
+After deploy, access your browser at `https://<your-domain>`. Interact via the REST API using tabs:
 
 ```bash
 # Create a new tab (opens about:blank)
-curl -X POST https://<your-domain>:9377/tabs \
+curl -X POST https://<your-domain>/tabs \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1", "sessionKey": "session-1"}'
 
 # Create a tab with an initial URL
-curl -X POST https://<your-domain>:9377/tabs \
+curl -X POST https://<your-domain>/tabs \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1", "sessionKey": "session-1", "url": "https://example.com"}'
 
 # Navigate a tab to a URL
-curl -X POST https://<your-domain>:9377/tabs/{tabId}/navigate \
+curl -X POST https://<your-domain>/tabs/{tabId}/navigate \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1", "url": "https://example.com"}'
 
 # Get accessibility snapshot (with element refs for click/type)
-curl -s "https://<your-domain>:9377/tabs/{tabId}/snapshot?userId=user-1"
+curl -s "https://<your-domain>/tabs/{tabId}/snapshot?userId=user-1"
 
 # Click an element by ref
-curl -X POST https://<your-domain>:9377/tabs/{tabId}/click \
+curl -X POST https://<your-domain>/tabs/{tabId}/click \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1", "ref": "e1"}'
 
 # Type into an element
-curl -X POST https://<your-domain>:9377/tabs/{tabId}/type \
+curl -X POST https://<your-domain>/tabs/{tabId}/type \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1", "ref": "e1", "text": "hello"}'
 
 # Close a tab
-curl -X DELETE https://<your-domain>:9377/tabs/{tabId} \
+curl -X DELETE https://<your-domain>/tabs/{tabId} \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1"}'
 ```
