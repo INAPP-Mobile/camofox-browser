@@ -36,7 +36,7 @@ This template deploys on Railway with a single service running Camoufox (a patch
 | `CAMOFOX_API_KEY` | *(empty)* | API key for auth (empty = open) |
 | `CAMOFOX_ADMIN_KEY` | *(empty)* | Admin key for privileged endpoints |
 | `CAMOFOX_PROFILE_DIR` | `/data/profiles` | Browser profile storage (use volume for persistence) |
-| `MAX_SESSIONS` | `10` | Max concurrent sessions (~500MB each) |
+| `MAX_SESSIONS` | `50` | Max concurrent sessions (~500MB each) |
 | `BROWSER_IDLE_TIMEOUT_MS` | `300000` | Idle timeout (5 min) |
 | `CAMOFOX_INTERACTIVE` | `off` | Interactive mode: off / desktop / novnc / auto |
 

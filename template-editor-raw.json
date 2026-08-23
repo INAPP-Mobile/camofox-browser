@@ -16,7 +16,7 @@
     "description": "Directory for storing browser profiles (cookies, localStorage, IndexedDB). Set to /data/profiles to use a Railway volume for persistence across restarts."
   },
   "MAX_SESSIONS": {
-    "value": "10",
+    "value": "50",
     "description": "Maximum number of concurrent browser sessions. Each session uses significant memory (500MB+). Reduce if memory-constrained."
   },
   "BROWSER_IDLE_TIMEOUT_MS": {

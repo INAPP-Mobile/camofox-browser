@@ -26,7 +26,7 @@
     },
     {
       "name": "MAX_SESSIONS",
-      "defaultValue": "10",
+      "defaultValue": "50",
       "description": "Maximum number of concurrent browser sessions. Each session uses significant memory (500MB+). Reduce if memory-constrained.",
       "isOptional": false
     },
