@@ -7,7 +7,7 @@
  * plugin registers.
  *
  * Architecture:
- *   Plugin replaces the default 1x1 Xvfb with a 1920x1080 display (via
+ *   Plugin replaces the default 1x1 Xvfb with a 1366x768 display (via
  *   ctx.createVirtualDisplay factory override). vnc-watcher.sh detects the
  *   Xvfb process, attaches x11vnc, and noVNC (websockify) proxies it to a
  *   web UI on port 6080.
@@ -17,7 +17,7 @@
  *     "plugins": {
  *       "vnc": {
  *         "enabled": true,
- *         "resolution": "1920x1080",
+ *         "resolution": "1366x768",
  *         "password": "",
  *         "viewOnly": false,
  *         "vncPort": 5900,
@@ -28,7 +28,7 @@
  *
  * Or via environment variables (override config):
  *   ENABLE_VNC=1           Enable the plugin
- *   VNC_RESOLUTION=1920x1080
+ *   VNC_RESOLUTION=1366x768
  *   VNC_PASSWORD=secret    Optional password for x11vnc
  *   VIEW_ONLY=1            View-only mode (no mouse/keyboard input)
  *   VNC_PORT=5900          x11vnc listen port
@@ -45,6 +45,7 @@
  */
 
 import { resolveVncConfig, startWatcher } from './vnc-launcher.js';
+import { attachNovncUpgradeProxy, createNovncHttpProxy, NOVNC_PROXY_PREFIX } from './novnc-proxy.js';
 import { requireAuth } from '../../lib/auth.js';
 import { removeXvfbDisplayFiles } from '../../lib/tmp-cleanup.js';
 
@@ -128,7 +129,25 @@ export async function register(app, ctx, pluginConfig = {}) {
       vncPort: Number(vncConfig.vncPort),
       novncPort: Number(vncConfig.novncPort),
       path: '/vnc.html',
+      publicPath: `${NOVNC_PROXY_PREFIX}/vnc.html`,
+      proxyPrefix: NOVNC_PROXY_PREFIX,
     });
+  });
+
+  if (typeof app.use === 'function') {
+    app.use(NOVNC_PROXY_PREFIX, createNovncHttpProxy({
+      novncPort: vncConfig.novncPort,
+      log,
+    }));
+  }
+
+  events.on('server:started', (payload) => {
+    if (payload?.server) {
+      attachNovncUpgradeProxy(payload.server, {
+        novncPort: vncConfig.novncPort,
+        log,
+      });
+    }
   });
 
   // --- HTTP endpoint: GET /sessions/:userId/storage_state ---

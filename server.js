@@ -477,6 +477,7 @@ app.post('/sessions/:userId/cookies', express.json({ limit: '512kb' }), async (r
   }
 });
 
+
 let browser = null;
 let _lastBrowserPid = null; // Track PID independently for force-kill after close
 let _browserClosePromise = null; // Shared promise for concurrent close serialization
@@ -1730,26 +1731,139 @@ function createTabState(page) {
  * Attach a popup handler to a managed page so that popups (target=_blank,
  * window.open) become tracked tabs rather than orphaned pages. (JO-2456)
  *
- * The handler registers the popup in the same session's '__popups__' tab group
- * and recursively attaches itself to the new page.
+ * OAuth provider popups (Google / Microsoft / Apple / Facebook) are redirected
+ * into the opener tab instead: nested noVNC often shows those popups as a
+ * dark/blank window that is almost impossible to use.
+ *
+ * The handler registers non-OAuth popups in the same session's '__popups__'
+ * tab group and recursively attaches itself to the new page.
  */
+function isOauthProviderUrl(url) {
+  if (!url || url === 'about:blank' || url === 'about:blank#blocked') return false;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    const path = parsed.pathname.toLowerCase();
+    if (host === 'accounts.google.com') return true;
+    if (host === 'account.google.com') return true;
+    if (host.endsWith('.google.com') && (path.includes('/o/oauth2') || path.includes('/signin'))) return true;
+    if (host === 'login.microsoftonline.com' || host === 'login.live.com') return true;
+    if (host === 'appleid.apple.com') return true;
+    if ((host === 'www.facebook.com' || host === 'facebook.com') && path.includes('login')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+async function redirectOauthPopupToOpener(openerPage, popupPage, userId, popupUrl) {
+  log('info', 'oauth popup redirected to opener tab (VNC-friendly)', {
+    userId,
+    url: popupUrl,
+  });
+  await popupPage.close().catch(() => {});
+  try {
+    await openerPage.bringToFront().catch(() => {});
+    await navigatePage(openerPage, popupUrl, { timeout: NAVIGATE_TIMEOUT_MS });
+  } catch (err) {
+    log('warn', 'oauth same-tab navigate failed', {
+      userId,
+      url: popupUrl,
+      error: err?.message || String(err),
+    });
+  }
+}
+
+async function enlargePopupForVnc(popupPage) {
+  try {
+    await popupPage.bringToFront().catch(() => {});
+    await popupPage.evaluate(() => {
+      try {
+        const w = Math.min(1280, screen.availWidth || 1280);
+        const h = Math.min(900, screen.availHeight || 900);
+        window.moveTo(0, 0);
+        window.resizeTo(w, h);
+      } catch {
+        // ignore — some browsers block window.resizeTo
+      }
+    }).catch(() => {});
+  } catch {
+    // ignore
+  }
+}
+
 function attachPopupHandler(page, userId, sessionKey) {
   page.on('popup', (popupPage) => {
-    const key = normalizeUserId(userId);
-    const currentSession = sessions.get(key);
-    if (!currentSession || currentSession._closing) return;
+    void (async () => {
+      const key = normalizeUserId(userId);
+      const currentSession = sessions.get(key);
+      if (!currentSession || currentSession._closing) {
+        await popupPage.close().catch(() => {});
+        return;
+      }
 
-    const popupTabId = fly.makeTabId();
-    const popupTabState = createTabState(popupPage);
-    attachDownloadListener(popupTabState, popupTabId, log, pluginEvents, key);
-    const popupGroup = getTabGroup(currentSession, sessionKey || '__popups__');
-    popupGroup.set(popupTabId, popupTabState);
-    currentSession.lastAccess = Date.now();
-    refreshActiveTabsGauge();
-    log('info', 'popup registered as managed tab', { userId: key, tabId: popupTabId, url: safePageUrl(popupPage) });
-    pluginEvents.emit('tab:created', { userId: key, tabId: popupTabId, page: popupPage, url: safePageUrl(popupPage) });
-    // Recursively handle popups from the popup
-    attachPopupHandler(popupPage, userId, sessionKey);
+      // OAuth providers often open about:blank first, then navigate.
+      try {
+        await popupPage.waitForURL((u) => {
+          try {
+            return String(u) !== 'about:blank' && !String(u).startsWith('about:blank');
+          } catch {
+            return false;
+          }
+        }, { timeout: 8000 });
+      } catch {
+        // stay with whatever URL we have
+      }
+
+      let popupUrl = '';
+      try {
+        popupUrl = popupPage.url();
+      } catch {
+        popupUrl = '';
+      }
+
+      if (isOauthProviderUrl(popupUrl)) {
+        await redirectOauthPopupToOpener(page, popupPage, key, popupUrl);
+        return;
+      }
+
+      const popupTabId = fly.makeTabId();
+      const popupTabState = createTabState(popupPage);
+      attachDownloadListener(popupTabState, popupTabId, log, pluginEvents, key);
+      const popupGroup = getTabGroup(currentSession, sessionKey || '__popups__');
+      popupGroup.set(popupTabId, popupTabState);
+      currentSession.lastAccess = Date.now();
+      refreshActiveTabsGauge();
+      log('info', 'popup registered as managed tab', {
+        userId: key,
+        tabId: popupTabId,
+        url: safePageUrl(popupPage),
+      });
+      pluginEvents.emit('tab:created', {
+        userId: key,
+        tabId: popupTabId,
+        page: popupPage,
+        url: safePageUrl(popupPage),
+      });
+      attachPopupHandler(popupPage, userId, sessionKey);
+      await enlargePopupForVnc(popupPage);
+
+      // Late OAuth navigation after registration (about:blank → accounts.google.com)
+      popupPage.once('framenavigated', (frame) => {
+        void (async () => {
+          try {
+            if (frame !== popupPage.mainFrame()) return;
+            const lateUrl = popupPage.url();
+            if (!isOauthProviderUrl(lateUrl)) return;
+            popupGroup.delete(popupTabId);
+            refreshActiveTabsGauge();
+            await redirectOauthPopupToOpener(page, popupPage, key, lateUrl);
+          } catch {
+            // ignore
+          }
+        })();
+      });
+    })();
   });
 }
 
@@ -6637,7 +6751,13 @@ const server = app.listen(PORT, CONFIG.bindHost || undefined, async () => {
   refreshTabLockQueueDepth();
   const address = server.address();
   const bindHost = typeof address === 'object' && address ? address.address : CONFIG.bindHost;
-  pluginEvents.emit('server:started', { port: PORT, host: bindHost, pid: process.pid, plugins: loadedPlugins });
+  pluginEvents.emit('server:started', {
+    port: PORT,
+    host: bindHost,
+    pid: process.pid,
+    plugins: loadedPlugins,
+    server,
+  });
   if (FLY_MACHINE_ID) {
     log('info', 'server started (fly)', { port: PORT, host: bindHost, pid: process.pid, machineId: FLY_MACHINE_ID, nodeVersion: process.version });
   } else {

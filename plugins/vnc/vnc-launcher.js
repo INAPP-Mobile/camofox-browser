@@ -30,7 +30,7 @@ function compactEnv(env) {
 export function resolveVncConfig(pluginConfig = {}, env = process.env) {
   const enabled = envFlagEnabled(env.ENABLE_VNC) || pluginConfig.enabled === true;
 
-  const rawResolution = env.VNC_RESOLUTION || pluginConfig.resolution || '1920x1080';
+  const rawResolution = env.VNC_RESOLUTION || pluginConfig.resolution || '1366x768';
   const resolution = rawResolution.includes('x', rawResolution.indexOf('x') + 1)
     ? rawResolution
     : `${rawResolution}x24`;

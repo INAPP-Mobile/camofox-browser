@@ -18,7 +18,7 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 VNC_PORT="${VNC_PORT:-5900}"
 NOVNC_PORT="${NOVNC_PORT:-6080}"
-VNC_RESOLUTION="${VNC_RESOLUTION:-1920x1080x24}"
+VNC_RESOLUTION="${VNC_RESOLUTION:-1366x768x24}"
 VNC_STATUS_FILE="${VNC_STATUS_FILE:-}"
 
 log() { printf '[vnc-watcher] %s\n' "$*" >&2; }
