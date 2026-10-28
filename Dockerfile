@@ -6,9 +6,11 @@ FROM node:22-trixie-slim AS camofox-browser
 
 # Pinned Camoufox version for reproducible builds
 # Update these when upgrading Camoufox
-ARG CAMOUFOX_VERSION=135.0.1
-ARG CAMOUFOX_RELEASE=beta.24
-ARG ARCH=x86_64
+ARG CAMOUFOX_VERSION=152.0.4
+ARG CAMOUFOX_RELEASE=beta.28
+ARG TARGETARCH
+ARG YT_DLP_VERSION=2026.08.19
+ARG YT_DLP_SHA256=1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6
 
 # Install dependencies for Camoufox (Firefox-based)
 RUN apt-get update && apt-get install -y \
@@ -52,22 +54,26 @@ RUN apt-get update && apt-get install -y \
 # -f so a 404 fails here instead of writing "Not Found" into the .zip: without it the
 # build dies three commands later on "unzip: cannot find zipfile directory", which
 # points at the archive rather than at the URL that was actually wrong. Note the Linux
-# arm asset is named lin.arm64.zip -- pass --build-arg ARCH=arm64, not aarch64.
-RUN mkdir -p /root/.cache/camoufox \
-    && curl -fL -o /tmp/camoufox.zip "https://github.com/daijro/camoufox/releases/download/v${CAMOUFOX_VERSION}-${CAMOUFOX_RELEASE}/camoufox-${CAMOUFOX_VERSION}-${CAMOUFOX_RELEASE}-lin.${ARCH}.zip" \
+# BuildKit supplies TARGETARCH; map its names to Camoufox release asset names. Fallback to amd64 when TARGETARCH is unset (non-BuildKit builders).
+RUN TARGETARCH="${TARGETARCH:-amd64}"; case "${TARGETARCH}" in \
+      amd64) CAMOUFOX_ARCH="x86_64" ;; \
+      arm64) CAMOUFOX_ARCH="arm64" ;; \
+      *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && mkdir -p /root/.cache/camoufox \
+    && curl -fL -o /tmp/camoufox.zip "https://github.com/daijro/camoufox/releases/download/v${CAMOUFOX_VERSION}-${CAMOUFOX_RELEASE}/camoufox-${CAMOUFOX_VERSION}-${CAMOUFOX_RELEASE}-lin.${CAMOUFOX_ARCH}.zip" \
     && (unzip -q /tmp/camoufox.zip -d /root/.cache/camoufox || true) \
     && rm /tmp/camoufox.zip \
     && chmod -R 755 /root/.cache/camoufox \
     && echo "{\"version\":\"${CAMOUFOX_VERSION}\",\"release\":\"${CAMOUFOX_RELEASE}\"}" > /root/.cache/camoufox/version.json \
     && test -f /root/.cache/camoufox/camoufox-bin && echo "Camoufox installed successfully"
 
-# Install yt-dlp for YouTube transcript extraction (no browser needed)
-RUN curl -L -o /usr/local/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" \
-    && chmod 755 /usr/local/bin/yt-dlp
+# yt-dlp is installed and verified by the enabled YouTube plugin hook below.
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json postinstall.js ./
+COPY lib/camoufox-download.js ./lib/
 COPY scripts/ ./scripts/
 # better-sqlite3 has no prebuild matching this node/arch, so npm ci falls back to
 # `node-gyp rebuild`, which fails on node:*-slim with "Error: not found: make".
@@ -109,19 +115,18 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 WORKDIR /app
 
-EXPOSE 9377
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Health check - Railway pings this to verify service is running
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD node -e "fetch('http://localhost:'+(process.env.CAMOFOX_PORT||process.env.PORT||9377)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+EXPOSE 9377
 
 CMD ["sh", "-c", "node --max-old-space-size=${MAX_OLD_SPACE_SIZE:-128} server.js"]
 
 # Optional: rebuild plugin deps after adding third-party plugins
 # Usage: docker build --target with-plugins -t camofox-browser .
 FROM camofox-browser AS with-plugins
-USER root
 COPY plugins/ ./plugins/
 COPY camofox.config.json ./
 COPY scripts/install-plugin-deps.sh /tmp/install-plugin-deps.sh

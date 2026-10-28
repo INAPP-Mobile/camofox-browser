@@ -25,14 +25,15 @@ Disabled by default. Enable with `ENABLE_VNC=1` env var or `"vnc": { "enabled": 
 
 ## Security
 
-- noVNC binds to `127.0.0.1` by default — set `VNC_BIND=0.0.0.0` to expose externally
-- Set `VNC_PASSWORD` for password-protected access
+- noVNC binds to `127.0.0.1` by default — set `VNC_BIND=0.0.0.0` to expose externally; this does not change native VNC's loopback bind
+- Native VNC requires separate `VNC_RFB_BIND` to expose externally, and refuses non-loopback binds without `VNC_PASSWORD`
+- Set `VNC_PASSWORD` for password-protected access; exposing noVNC without it remains unsafe
 - `VIEW_ONLY=1` disables keyboard/mouse input (observation only)
 - Storage state export endpoint requires auth (API key or loopback)
 
 ## Architecture
 
-The plugin overrides `ctx.createVirtualDisplay` to use a higher-resolution display (default 1920x1080 instead of 1x1). `vnc-watcher.sh` polls for the Xvfb process, then attaches x11vnc + noVNC on top.
+The plugin registers the `virtualDisplay` capability for its own `plugins.vnc` settings, selecting a higher-resolution display (default 1920x1080 instead of 1x1). A second plugin cannot silently replace that provider. `vnc-watcher.sh` polls for the Xvfb process, then attaches x11vnc + noVNC on top.
 
 ## Original Contributors
 
