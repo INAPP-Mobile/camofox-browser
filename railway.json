@@ -15,6 +15,7 @@
         "name": "camofox-profiles",
         "mountPath": "/data/profiles"
       }
-    ]
+    ],
+    "startCommand": "node scripts/xfer.js"
   }
 }
