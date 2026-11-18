@@ -151,7 +151,7 @@
     "jest": "^30.4.2",
     "openclaw": "2026.9.4",
     "pngjs": "^7.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "@jest/reporters": {
