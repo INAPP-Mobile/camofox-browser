@@ -136,7 +136,7 @@
     "fetch-bin": "node lib/camoufox-download.js"
   },
   "dependencies": {
-    "better-sqlite3": "13.0.3",
+    "better-sqlite3": "13.2.0",
     "camoufox-js": "0.13.0",
     "express": "^5.2.1",
     "playwright-core": "^1.58.0",
@@ -149,7 +149,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "jest": "^30.4.2",
-    "openclaw": "2026.11.1",
+    "openclaw": "2026.11.6",
     "pngjs": "^7.0.0",
     "typescript": "^5.7.0"
   },
